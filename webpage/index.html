@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+   <title>Rasmus Jaakonmäki</title>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="stylesheet" href="rj.css">
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+   <style>
+      body, h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
+      .rj-row-padding img {margin-bottom: 12px}
+      /* Set the width of the sidebar to 120px */
+      .rj-sidebar {width: 120px;background: #222;}
+      /* Add a left margin to the "page content" that matches the width of the sidebar (120px) */
+      #main {margin-left: 120px}
+      /* Remove margins from "page content" on small screens */
+      @media only screen and (max-width: 600px) {#main {margin-left: 0}}
+   </style>
+   <body class="rj-black">
+      <!-- Icon Bar (Sidebar - hidden on small screens) -->
+      <nav class="rj-sidebar rj-bar-block rj-small rj-hide-small rj-center">
+         <!-- Avatar image in top left corner -->
+         <img src="rasmus-240.jpg" style="width:100%">
+         <a href="#" class="rj-bar-item rj-button rj-padding-large rj-black">
+            <i class="fa fa-home rj-xxlarge"></i>
+            <p>HOME</p>
+         </a>
+         <a href="#about" class="rj-bar-item rj-button rj-padding-large rj-hover-black">
+            <i class="fa fa-user rj-xxlarge"></i>
+            <p>ABOUT</p>
+         </a>
+         <a href="#photos" class="rj-bar-item rj-button rj-padding-large rj-hover-black">
+            <i class="fa fa-eye rj-xxlarge"></i>
+            <p>PHOTOS</p>
+         </a>
+         <a href="#contact" class="rj-bar-item rj-button rj-padding-large rj-hover-black">
+            <i class="fa fa-envelope rj-xxlarge"></i>
+            <p>CONTACT</p>
+         </a>
+      </nav>
+      <!-- Navbar on small screens (Hidden on medium and large screens) -->
+      <div class="rj-top rj-hide-large rj-hide-medium" id="myNavbar">
+         <div class="rj-bar rj-black rj-opacity rj-hover-opacity-off rj-center rj-small">
+            <a href="#" class="rj-bar-item rj-button" style="width:25% !important">HOME</a>
+            <a href="#about" class="rj-bar-item rj-button" style="width:25% !important">ABOUT</a>
+            <a href="#photos" class="rj-bar-item rj-button" style="width:25% !important">PHOTOS</a>
+            <a href="#contact" class="rj-bar-item rj-button" style="width:25% !important">CONTACT</a>
+         </div>
+      </div>
+      <!-- Page Content -->
+      <div class="rj-padding-large" id="main">
+         <!-- Header/Home -->
+         <header class="rj-container rj-padding-32 rj-center rj-black" id="home">
+            <h1 class="rj-xxlarge"><span class="rj-hide-small">I'm</span> Rasmus Jaakonmäki.</h1>
+            <p style="margin-bottom: 64px;">Coder, Photographer and Web Designer.</p>
+            <img src="paris.jpg" alt="boy" class="rj-image" width="100%" height="auto">
+         </header>
+         <!-- About Section -->
+         <div class="rj-content rj-justify rj-text-grey rj-padding-32" id="about">
+            <h2 class="rj-padding-16 rj-text-light-grey">About Me</h2>
+            <hr style="width:200px; margin-top: -10px;" class="rj-opacity">
+            <p>Enthusiastic website designer/developer, photographer, videographer and graphic designer who combines these with business skills to provide services that improve client's marketing and promote and grow their business. Currently studying coding in Hive Helsinki and aiming to work with AI, VR/AR/XR and IoT/IoE solutions.</p>
+            <p>Experienced in photography/videography devices, Adobe Creative Suite, HTML/CSS/WordPress development and search engine optimization.</p>
+            <p>I love learning new things, technologies and trends and to try and do unconventional and creative things with different techniques.</p>
+            <br>
+            <h3 class="rj-padding-16 rj-text-light-grey">Skills</h3>
+            <hr style="width:200px; margin-top: -10px;" class="rj-opacity">
+            <p class="rj-wide">Coding</p>
+            <p class="rj-wide">Photography</p>
+            <p class="rj-wide">Videography</p>
+            <p class="rj-wide">Web Design & Wordpress</p>
+            <p class="rj-wide">Search Engine Optimization</p>
+            <br>
+            <!-- Grid for pricing tables -->
+            <h3 class="rj-padding-16 rj-text-light-grey">Prices</h3>
+            <hr style="width:200px; margin-top: -10px;" class="rj-opacity">
+            <div class="rj-row-padding" style="margin:0 -16px;">
+               <div class="rj-margin-bottom">
+                  <ul class="rj-ul rj-white rj-center rj-opacity rj-hover-opacity-off" style="max-width: 500px; margin: auto;">
+                     <li class="rj-dark-grey rj-xlarge rj-padding-32">Web Design & Graphic Design</li>
+                     <li class="rj-padding-16">
+                        <h2>50€</h2>
+                        <span class="rj-opacity">+ VAT per hour</span>
+                     </li>
+                     <li class="rj-light-grey rj-padding-24">
+                        <a href="#contact">
+                            <button class="rj-button rj-white rj-padding-large rj-hover-black">Contact</button>
+                        </a>
+                     </li>
+                  </ul>
+               </div>
+               <div class="rj-row-padding" style="margin:0 -16px;">
+               <div class="rj-margin-bottom">
+                  <ul class="rj-ul rj-white rj-center rj-opacity rj-hover-opacity-off" style="max-width: 500px; margin: auto;">
+                     <li class="rj-dark-grey rj-xlarge rj-padding-32">Video Shooting & Editing</li>
+                     <li class="rj-padding-16">
+                        <h2>80€</h2>
+                        <span class="rj-opacity">+ VAT per hour</span>
+                     </li>
+                     <li class="rj-light-grey rj-padding-24">
+                        <a href="#contact">
+                            <button class="rj-button rj-white rj-padding-large rj-hover-black">Contact</button>
+                        </a>
+                     </li>
+                  </ul>
+               </div>
+               <div class="rj-row-padding" style="margin:0 -16px;">
+               <div class="rj-margin-bottom">
+                  <ul class="rj-ul rj-white rj-center rj-opacity rj-hover-opacity-off" style="max-width: 500px; margin: auto;">
+                     <li class="rj-dark-grey rj-xlarge rj-padding-32">Business Photography</li>
+                     <li>Portrait Photography</li>
+                     <li>Product Photography</li>
+                     <li>Architectural Photography</li>
+                     <li>Other Commercial Photography</li>
+                     <li class="rj-padding-16">
+                        <span class="rj-opacity">Starting from</span>
+                            <h2>120€</h2>
+                        <span class="rj-opacity">+ VAT, request a quotation</span>
+                     </li>
+                     <li class="rj-light-grey rj-padding-24">
+                        <a href="#contact">
+                            <button class="rj-button rj-white rj-padding-large rj-hover-black">Contact</button>
+                        </a>
+                     </li>
+                  </ul>
+               </div>
+               <!-- End Grid/Pricing tables -->
+            </div>
+         </div>
+         <!-- Portfolio Section -->
+       </div>
+    </div>
+    <div class="rj-content-1600">
+      <div class="rj-content-1600">
+         <div class="rj-padding-64 rj-content-1600" id="photos">
+            <h2 class="rj-text-light-grey">Photos</h2>
+            <hr style="width:200px; margin-top: -10px;" class="rj-opacity">
+            <!-- Grid for photos -->
+            <div class="rj-row-padding" style="margin:0 -16px">
+               <div class="rj-half">
+                  <img src="1.jpg" style="width:100%">
+                  <img src="6.jpg" style="width:100%">
+                  <img src="2.jpg" style="width:100%">
+                  <img src="4.jpg" style="width:100%">
+               </div>
+               <div class="rj-half">
+                  <img src="3.jpg" style="width:100%">
+                  <img src="5.jpg" style="width:100%">
+                  <img src="7.jpg" style="width:100%">
+                  <img src="8.jpg" style="width:100%">
+               </div>
+               <!-- End photo grid -->
+            </div>
+            <!-- End Portfolio Section -->
+         </div>
+         <!-- Contact Section -->
+         <div class="rj-padding-32 rj-content rj-text-grey" id="contact">
+            <h2 class="rj-text-light-grey">Contact Me</h2>
+            <hr style="width:200px; margin-top: -10px;" class="rj-opacity">
+            <div class="rj-section" style="max-width: 280px; margin: auto;">
+               <p><i class="fa fa-map-marker fa-fw rj-text-white rj-xxlarge rj-margin-right"></i> Helsinki, Finland</p>
+               <p><i class="fa fa-phone fa-fw rj-text-white rj-xxlarge rj-margin-right"></i> Phone: +358 40 808 6376</p>
+               <p><i class="fa fa-envelope fa-fw rj-text-white rj-xxlarge rj-margin-right"> </i> Email: rasmus@lense.fi</p>
+            </div>
+            <br>
+            <!-- End Contact Section -->
+         </div>
+         <!-- Footer -->
+         <footer class="rj-content rj-padding-32 rj-text-grey rj-xlarge" style="text-align: center;">
+            <a href="https://www.facebook.com/rasmusjaakonmakiphotography/" style="text-decoration: none;">
+                <i class="fa fa-facebook-official rj-hover-opacity"></i>
+            </a>
+            <a href="https://www.instagram.com/rasmusjaa/" style="text-decoration: none;">
+                <i class="fa fa-instagram rj-hover-opacity"></i>
+            </a>
+            <a href="https://www.linkedin.com/in/rasmusjaakonmaki/" style="text-decoration: none;">
+                <i class="fa fa-linkedin rj-hover-opacity"></i>
+            </a>
+            <!-- End footer -->
+         </footer>
+         <!-- END PAGE CONTENT -->
+      </div>
+   </body>
+</html>

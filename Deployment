@@ -1,0 +1,521 @@
+***** Deployment *****
+
+Install Debian (on virtual machine or regular machine)
+with standard settings (ssh and standard packages).
+In this virtual machine user settings are:
+Root password is: 6p6#66
+User is: nonroot
+Nonroot password is: 6p6
+
+
+If you use VirtualBoxVM, make sure that network adapter 1
+is "Attached to: Bridged Adapter" (default is NAT)
+to let you connect with static ip.
+
+
+Login to your virtual machine with nonroot user.
+Check second device inet with command "ip a" and
+ssh login to that with "ssh username@host" so in this case:
+ssh nonroot@*****
+
+
+*** UPDATE PACKAGES AND ADD SUDO ***
+
+Use command "su" and root password to get privileges.
+apt-get install sudo
+apt-get update -y
+apt-get upgrade -y
+
+
+*** GIVE SUDO RIGHT TO [USER] ***
+
+> cat /etc/sudoers
+See this part:
+# User privilege specification
+root	ALL=(ALL:ALL) ALL
+Under that add line (replace [user] with your username):
+[user]	ALL=(ALL:ALL) NOPASSWD:ALL
+with command:
+nano /etc/sudoers
+
+On virtual machine close connection with ctrl+D, login again and test:
+> sudo whoami
+should say root
+
+
+*** SET STATIC IP ***
+
+First we set static IP and nermask in \30 (instead of DHCP).
+Current settings with command:
+> cat /etc/network/interfaces
+// OUTPUT
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+allow-hotplug enp0s3
+iface enp0s3 inet dhcp
+// OUTPUT ENDS
+
+Remove last line and change "allow-hotplug" to "auto", edit with:
+> sudo nano /etc/network/interfaces
+// OR COPY FILE assets/interfaces
+
+We need to change dhcp to static and set ip and netmask in \30.
+Create a file with command:
+> sudo nano /etc/network/interfaces.d/enp0s3
+Add:
+// FILE CONTENT
+iface enp0s3 inet static
+	address 10.12.161.161
+	netmask 255.255.255.252
+	gateway 10.12.254.254
+// CONTENT ENDS
+// OR COPY FILE assets/interfaces.d/enp0s3
+
+Restart services with command:
+> sudo service networking restart
+Check that inet is changed and service is up with:
+> ip actions
+If service is down brong it up with:
+> ip link set enp0s3 up
+
+Now you can continue remotely by logging in with:
+> ssh nonroot@10.12.161.161
+
+
+*** SET PUBLIC KEY LOGIN FOR USER ***
+
+make a key from the user's computer with command:
+change dir with
+> cd ~/.ssh
+(so you can name your key and create it to .ssh dir)
+> ssh-keygen -t rsa		(used vmnonroot and passphrase p6p6 for this)
+> copy public key to the server with command (and use user password, not new passphrase):
+> ssh-copy-id -i [public_key_file.pub] [user]@[ip] -p [port]
+check file if there has been a key added
+> cat ~/.ssh/authorized_keys
+
+login with key (-v to see if key used, -i path to select which key)
+ssh -v -i ~/.ssh/vmnonroot nonroot@10.12.161.161
+
+
+*** ADD SECOND USER WITHOUT PUBLIC KEY (ONLY PASSWORD AUTHENTICATION) ***
+
+adding new test user (nonroot2, 7p7):
+> sudo adduser nonroot2
+can only login with password now:
+ssh -v nonroot2@10.12.161.161
+
+
+*** SAVE PRIVATE KEY PASSPHRASE SO IT'S ONLY ASKED ONCE ***
+
+on computer with private key (not vm) add a key with ssh agent with commands:
+> eval `ssh-agent`
+> ssh-add ~/.ssh/[private key file]
+check with
+> ssh-add -l
+
+
+*** DISABLE PASSWORD AUTHENTICATION AND ROOT LOGIN ***
+
+> cat /etc/ssh/sshd_config
+currently root cannot login with password, but could with private key
+#PermitRootLogin prohibit-password
+change it to:
+PermitRootLogin no
+and to disable logins without ssh keys change
+#PasswordAuthentication yes
+to
+PasswordAuthentication no
+> sudo nano /etc/ssh/sshd_config
+restart ssh
+> sudo service sshd restart
+
+now if you try to login with
+> ssh nonroot2@10.12.161.161
+you should get:
+nonroot2@10.12.161.161: Permission denied (publickey).
+user nonroot is able to login because it has public key for login
+
+
+*** CHANGE DEFAULT SSH PORT ***
+
+/etc/ssh/sshd_config has line:
+#Port 22
+change it to private port (49152–65535), we choose 52525 so line will be:
+Port 52525
+use
+> sudo nano /etc/ssh/sshd_config
+and
+> sudo service sshd restart
+now new ssh login needs a port, so you can login with:
+> ssh -i ~/.ssh/vmnonroot nonroot@10.12.161.161 -p 52525
+you can check that port is ssh with:
+>
+sudo lsof -i:52525
+
+
+*** INSTALL REST OF THE SERVICES USED FOR PORTS, FIREWALL AND WEB APP ***
+
+//making sure everything still up to date
+> sudo apt update -y
+// -y flag to answer yes automatically. apache to serve web files:
+> sudo apt install apache2 -y
+// ufw to configure firewall
+> sudo apt install ufw -y
+// fail2ban to scan log files and ban hackers and bots
+> sudo apt install fail2ban -y
+// nmap to scan open ports
+> sudo apt-get install nmap
+// porstentry to hide ports
+> sudo apt-get install portsentry -y
+
+
+*** ALLOW INCOMING TRAFFIC TO SSH (OUR 52525 PORT), HTTP AND HTTPS ***
+
+tcp is better for this case, no packages lost or breaking, but slower.
+udp has no error checking, but is faster so would be good for streaming
+or dns for example. So we open ports for tcp traffic
+// allow ssh
+> sudo ufw allow 52525/tcp
+// enable service and check that it's working
+> sudo ufw enable
+> sudo ufw status verbose
+// open http
+> sudo ufw allow 80/tcp
+// open https
+> sudo ufw allow 443/tcp
+
+// reload ufw just in case
+> sudo ufw reload
+
+
+*** SET UP DOS PROTECTION WITH FAIL2BAN ***
+
+> service fail2ban status
+// check current rules
+> sudo /etc/fail2ban/jail.conf
+> /etc/fail2ban/jail.d/defaults-debian.conf
+// add rules to local file to add to and override default rules
+// also local so that rules don't get overwritten when updated
+> sudo nano /etc/fail2ban/jail.d/jail-debian.local
+add content from assets/etc/fail2ban/jail.d/jail-debian.local
+
+//check that apache access.log exists in location given in conf file
+// in some systems httpd is path instead of apache2
+> sudo ls /var/log/apache2/
+
+> sudo service fail2ban restart
+
+first set ssh bantime to 20 or something seconds and
+try spamming ssh to see that fail2ban works
+> ssh -i ~/.ssh/vmnonroot nonroot3@10.12.161.161 -p 52525
+set time back to more useful ban time like 600 seconds
+
+Add regex rules to http-get-dos
+
+Regular expressions are used to detect break-in attempts,
+password failures, etc. Regular expressions are looked to
+see if they match the lines of the logfile.
+You can use the predefined entity <HOST> in your regexes.
+<HOST> is an alias for (?:::f{4,6}:)?(?P<host>\S+),
+which matches either a hostname or an IPv4 address
+(possibly embedded in an IPv6 address).
+
+If the failregex is anchored with a leading ^, then the
+anchor refers to the start of the remainder of the line,
+after the timestamp and intervening whitespace.
+
+Reaction time
+Fail2ban is a log parser. It cannot do anything before
+something is written in the log files. So there might be
+more than max tries, sinc fail2ban waits 1 second before
+checking new logs to be scanned
+
+For example spamming f5 on website would be caught
+and other requests if sent too many
+
+create regex rules for http-get-dos by copying content of
+assets/etc/fail2ban/filter.d/http-get-dos.conf
+to server:
+> sudo nano /etc/fail2ban/filter.d/http-get-dos.conf
+
+restart firewall and fail2ban:
+> sudo ufw reload
+> sudo service fail2ban restart
+
+
+*** SCAN PORTS ***
+
+scan all ports with nmap (can be done from external machines too)
+> sudo nmap -vv -p 1-65535 10.12.161.161
+and lsof to show which services listen to these ports
+> sudo lsof -i -P
+should show open ports and service listening them
+portsentry listens to certain ports that are not listened by other service,
+next we configure portsentry so that they don't look open
+
+
+*** CONFIGURE PORTSENTRY ***
+
+In standard mode portsentry runs in the background and reports any violations,
+in Stealth modes, PortSentry will use a raw socket to monitor all incoming
+packets, and if a monitored port is probed, it will block the host.
+
+The most sensitive modes are those used by Advanced Stealth scan detection.
+You can explicitly ask PortSentry to ignore certain ports
+(which can be key when running a particularly reactionary configuration)
+to protect legitimate traffic. By default, PortSentry pays most attention
+to the first 1024 ports (otherwise known as privileged ports)
+because that’s where non-ephemeral connections usually originate from daemons.
+
+change tcp and udp to atcp and aupd (advanced) or overwrite with file
+assets/etc/default/portsentry
+
+> sudo nano /etc/default/portsentry
+
+Ignore Options are
+# 0 = Do not block UDP/TCP scans. (log only)
+# 1 = Block UDP/TCP scans.
+# 2 = Run external command only (KILL_RUN_CMD)
+so set:
+BLOCK_UDP="0"
+BLOCK_TCP="0"
+to
+BLOCK_UDP="1"
+BLOCK_TCP="1"
+
+Dropping Routes tell what to do when ports are scanned. Comment out default:
+KILL_ROUTE="/sbin/route add -host $TARGET$ reject"
+to
+# KILL_ROUTE="/sbin/route add -host $TARGET$ reject"
+we want packet filter so uncomment under # iptables support for Linux:
+# KILL_ROUTE="/sbin/iptables -I INPUT -s $TARGET$ -j DROP"
+to
+KILL_ROUTE="/sbin/iptables -I INPUT -s $TARGET$ -j DROP"
+This will drop all packets originating from an attacker’s IP address
+
+> sudo nano /etc/portsentry/portsentry.conf
+> sudo service portsentry restart
+
+Other options we didn't change:
+/etc/default/portsentry (daemon startup options) and
+/etc/portsentry/portsentry.ignore.static (hosts/interfaces to ignore)
+
+
+*** SCAN PORTS AGAIN TO SEE THAT PORTSENTRY WORKS CORRECTLY ***
+
+> sudo nmap -vv -p 1-65535 10.12.161.161
+probes drop out so is working
+
+> sudo lsof -i -P
+and no portsentry listening here either
+
+
+*** STOP UNNECESSARY SERVICES ***
+
+// this shows some services, but not the wants we want
+// > sudo service --status-all
+check services with for example
+> sudo systemctl status keyboard-setup
+find all enabled services and keep (+) or disable (-):
+> sudo systemctl list-unit-files --type service | grep enabled
+apache2.service                        enabled + used for web server
+apparmor.service                       enabled + mandatory access control system (MAC) for protection
+autovt@.service                        enabled + needed for getty (login)
+console-setup.service                  enabled - no need for keyboard conf scheme
+cron.service                           enabled + needed for timed tasks
+dbus-org.freedesktop.timesync1.service enabled + Network Time Synchronization
+fail2ban.service                       enabled + we just set it up
+getty@.service                         enabled + checks logins and authentiactes user
+keyboard-setup.service                 enabled - no need for console keyboard layout
+networking.service                     enabled + raise network interfaces
+rsyslog.service                        enabled + not necessary, but error logs are always useful
+ssh.service                            enabled + we connect with this
+sshd.service                           enabled + we connect with this
+syslog.service                         enabled + not necessary, but error logs are always useful
+systemd-fsck-root.service              enabled-runtime + File System Check on Root Device
+systemd-timesyncd.service              enabled + Network Time Synchronization
+ufw.service                            enabled + firewall
+
+disable with:
+> sudo systemctl disable console-setup
+> sudo systemctl disable keyboard-setup
+
+
+*** ADD UPDATE SCRIPT ***
+
+command
+sudo apt-get update -y
+to log file
+/var/log/update_script.log
+create log file
+> sudo touch /var/log/update_script.log
+> sudo chmod 777 /var/log/update_script.log
+> echo "sudo apt-get update -y >> /var/log/update_script.log" >> ~/update.sh
+same with upgrade
+> echo "sudo apt-get upgrade -y >> /var/log/update_script.log" >> ~/update.sh
+
+The difference with crontab -e and /etc/crontab is that /etc/crontab file
+is a special case file used to implement a system-wide
+crontab. /var/spool/cron/crontabs/$USER (or whatever the path happens
+to be) is an implementation detail.
+
+If you can schedule jobs using the crontab command, you should do so.
+
+Manually editing the contents of /etc/crontab requires root access,
+and is more error-prone. You can mess up your system that way.
+
+edit crontab -e and make script run on reboot and once a week at 4AM
+@reboot sudo ~/update.sh
+0 4 * * sat sudo ~/update.sh
+> sudo crontab -e
+add executable rights to script, these 2 lines:
+@reboot /bin/bash /home/nonroot/update.sh
+0 4 * * sat /bin/bash /home/nonroot/update.sh
+
+> sudo chmod 755 update.sh
+enable cron
+> sudo systemctl enable cron
+
+
+*** MONITOR /ETC/CRONTAB CHANGES ***
+
+edit ~/cronMonitor.sh to look like this:
+
+// FILE CONTENT
+#!/bin/bash
+
+FILE="/var/tmp/checksum"
+FILE_TO_WATCH="/etc/crontab"
+MD5VALUE=$(sudo md5sum $FILE_TO_WATCH)
+
+if [ ! -f $FILE ]
+then
+     echo "$MD5VALUE" > $FILE
+     exit 0;
+fi;
+
+if [ "$MD5VALUE" != "$(cat $FILE)" ];
+    then
+    echo "$MD5VALUE" > $FILE
+    echo "Crontab has been modified!!!" | mail -s "$FILE_TO_WATCH modified !" root
+fi;
+// CONTENT ENDS
+
+>nano ~/cronMonitor.sh
+
+Add task to crontab, so that file looks like this:
+// FILE CONTENT
+@reboot /bin/bash /home/nonroot/update.sh
+0 4 * * sat /bin/bash /home/nonroot/update.sh
+0 0 * * * /bin/bash /home/nonroot/cronMonitor.sh
+// CONTENT ENDS
+
+> sudo crontab -e
+
+it will send mail of changes at 0 minute 0 hour, so at midnight
+if you want to test, set it first to every minute with * * * * *
+and change crontab and check log that it has run:
+> sudo cat /var/log/syslog
+you should find mail with:
+> sudo cat /var/mail/nonroot
+
+mail is just local now, to send it outside server you should have a domain
+and install a mail service. You could also send it through another email
+with SMTP relay
+
+
+*** ADD WEB PAGE ***
+
+apache is installed, so you can check if there is apache default web page
+by going with browser to
+10.12.161.161
+if site is not there restart apache with
+> sudo service apache2 restart
+
+website is in
+/var/www/html/
+so to publish a html site there add index.html and other required files
+make a webpage fir to your home
+> cd
+> mkdir webpage
+On your mac from go to dir with files and (P for port needs to be capital):
+> scp -P 52525 -i ~/.ssh/vmnonroot * nonroot@10.12.161.161:/home/nonroot/webpage
+
+back on debian:
+> cd webpage
+> sudo cp * /var/www/html/
+> cd
+> rm -rf webpage
+
+site should be available now on 10.12.161.161
+
+
+*** ADD SSL CERTIFICATE TO SITE ***
+
+> sudo apt-get install apache2 openssl
+> sudo mkdir -p /etc/ssl/localcerts
+> sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -out /etc/ssl/localcerts/apache.pem -keyout /etc/ssl/localcerts/apache.key
+answer questions, we used Common Name: webpage
+question answers could be sent with command
+
+> sudo chmod 600 /etc/ssl/localcerts/apache*
+enable ssl mode
+> sudo a2enmod ssl
+
+create ssl-params.conf with content from assets/etc/apache2/conf-available/ssl-params.conf
+> sudo nano /etc/apache2/conf-available/ssl-params.conf
+
+edit default-ssl to have content of assets/etc/apache2/sites-available/default-ssl.conf:
+> sudo nano /etc/apache2/sites-available/default-ssl.conf
+
+and redirect http to https by editing 000-default to have content of assets//etc/apache2/sites-available/000-default.conf
+> sudo nano /etc/apache2/sites-available/000-default.conf
+
+make changes go live:
+> sudo a2enmod ssl
+> sudo a2enmod headers
+> sudo a2ensite default-ssl
+> sudo a2enconf ssl-params
+> sudo systemctl reload apache2
+
+now go to domain https://10.12.161.161/
+it shows not secure, but if you check certificate details you find
+your self signed certificate. self signed is not secure so you get
+the warning, for real domain you should use let's encrypt or another
+paid option
+
+
+*** MAKE SURE THAT FAIL2BAN WORKS ***
+
+fail2ban log
+> sudo cat /var/log/fail2ban.log
+set maxretry to 20 or something:
+> sudo nano /etc/fail2ban/jail.d/jail-debian.local
+reload page a few times and check log again, should show banned
+> sudo cat /var/log/fail2ban.log
+
+*** FUNCTIONAL SOLUTION FOR DEPLOYMENT AUTOMATION ***
+
+First set up virtual machine and user, check vm ip and use ssh to login.
+Use bashable scripts to set up user rights and static ip, login again,
+install and configure everything. Instead of editing configuration files
+create them so that they are edited (like those in this repo) and ready to
+be uploaded to virtual machine. You can use scp command in scripts to move files
+to server, though you would have to copy them to temp dir first and cp from there
+to final location with sudo rights.
+
+Scripts could be made from commands on this file (lines starting with >), though some
+ask questions after you run them. Yes/no questions can be skipped with -y and for example
+certificate creation asks many questions, but they can be answered in script with option
+like -subj "/C=**/ST=**/O=**/OU=**/CN=**"
+So it would be possible to just run all commands through script without interruptions
+and instead of editing files copy files with same script.
